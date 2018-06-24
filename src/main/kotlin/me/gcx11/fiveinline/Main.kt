@@ -1,3 +1,5 @@
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.events.MouseEvent
@@ -15,15 +17,18 @@ fun main(args: Array<String>) {
         canvas.height = window.innerHeight
         document.body!!.appendChild(canvas)
 
-        window.setInterval({
-            context.clearRect(
-                0.0,
-                0.0,
-                context.canvas.width.toDouble(),
-                context.canvas.height.toDouble()
-            )
-            draw(context)
-        }, 1000 / 60)
+        launch {
+            while (true) {
+                context.clearRect(
+                    0.0,
+                    0.0,
+                    context.canvas.width.toDouble(),
+                    context.canvas.height.toDouble()
+                )
+                draw(context)
+                delay(1000 / 60)
+            }
+        }
 
         canvas.addEventListener("click", { e ->
             val mouseEvent = e as MouseEvent
