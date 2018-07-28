@@ -1,6 +1,5 @@
 import org.w3c.dom.CanvasRenderingContext2D
 import kotlin.math.PI
-
 class BoardView(
     val board: Board
 ) {

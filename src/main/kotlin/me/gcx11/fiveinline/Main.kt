@@ -1,3 +1,6 @@
+import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.experimental.Job
+import kotlinx.coroutines.experimental.awaitAnimationFrame
 import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.w3c.dom.CanvasRenderingContext2D
@@ -9,6 +12,9 @@ import kotlin.browser.window
 val board = Board(10, 10)
 val boardView = BoardView(board)
 
+var nextMoveComputation: Job? = null
+val isGameOver = atomic(false)
+
 fun main(args: Array<String>) {
     window.onload = {
         val canvas = document.createElement("canvas") as HTMLCanvasElement
@@ -19,14 +25,9 @@ fun main(args: Array<String>) {
 
         launch {
             while (true) {
-                context.clearRect(
-                    0.0,
-                    0.0,
-                    context.canvas.width.toDouble(),
-                    context.canvas.height.toDouble()
-                )
+                window.awaitAnimationFrame()
+                clearCanvas(context)
                 draw(context)
-                delay(1000 / 60)
             }
         }
 
@@ -35,14 +36,45 @@ fun main(args: Array<String>) {
 
             val cellCoords = boardView.mousePositionToCoord(mouseEvent.offsetX, mouseEvent.offsetY)
             cellCoords?.let { (x, y) ->
-                if (board.isEmptyAt(x, y)) {
+                if (board.isEmptyAt(x, y)
+                    && nextMoveComputation?.isActive != true
+                    && isGameOver.value == false) {
                     board[x, y] = CellValue.FIRST
-                } else {
-                    board[x, y] = CellValue.SECOND
+                    checkForWinner()
+                    if (isGameOver.value == false) computeNextMoveAsync()
                 }
             }
         })
     }
+}
+
+fun computeNextMoveAsync() {
+    nextMoveComputation = launch {
+        val ai = AdvancedAI()
+        val (x, y) = ai.nextMove(board)
+        board[x, y] = CellValue.SECOND
+    }
+
+    nextMoveComputation?.invokeOnCompletion {
+        checkForWinner()
+    }
+}
+
+fun checkForWinner() {
+    val winnerValue = board.checkForWinner(5)
+    if (winnerValue != CellValue.EMPTY) {
+        println("WINNER IS: $winnerValue")
+        isGameOver.value = true
+    }
+}
+
+fun clearCanvas(context: CanvasRenderingContext2D) {
+    context.clearRect(
+        0.0,
+        0.0,
+        context.canvas.width.toDouble(),
+        context.canvas.height.toDouble()
+    )
 }
 
 fun draw(context: CanvasRenderingContext2D) {
