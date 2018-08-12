@@ -16,6 +16,7 @@ var nextMoveComputation: Job? = null
 val isGameOver = atomic(false)
 
 fun main(args: Array<String>) {
+    if (jsTypeOf(window) == "undefined") return
     window.onload = {
         val canvas = document.createElement("canvas") as HTMLCanvasElement
         val context = canvas.getContext("2d") as CanvasRenderingContext2D

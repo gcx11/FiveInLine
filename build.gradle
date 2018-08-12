@@ -3,7 +3,7 @@ version '1.0-SNAPSHOT'
 
 buildscript {
     ext {
-        kotlin_version = '1.2.50'
+        kotlin_version = '1.2.60'
     }
 
     repositories {
@@ -17,7 +17,7 @@ buildscript {
 }
 
 apply plugin: 'kotlin2js'
-apply plugin: 'kotlin-dce-js'
+//apply plugin: 'kotlin-dce-js'
 apply plugin: 'com.moowork.node'
 
 repositories {
@@ -31,7 +31,7 @@ dependencies {
     testCompile "org.jetbrains.kotlin:kotlin-test-js:$kotlin_version"
 }
 
-task assembleWeb(type: Sync, dependsOn: compileKotlin2Js) {
+task assembleWeb(type: Sync, dependsOn: [compileKotlin2Js, classes]) {
     configurations.compile.each { File file ->
         copy {
             includeEmptyDirs = false
@@ -48,23 +48,19 @@ task assembleWeb(type: Sync, dependsOn: compileKotlin2Js) {
             from "src/main/resources"
             into "${projectDir}/web"
         }
+
+        copy {
+            from "${projectDir}/build/classes/kotlin/main/"
+            into "${projectDir}/web"
+        }
     }
-
-    dependsOn classes
 }
 
-assemble.dependsOn assembleWeb
-
-compileKotlin2Js {
-    kotlinOptions.outputFile = "${projectDir}/web/output.js"
-    kotlinOptions.sourceMap = true
+[compileKotlin2Js, compileTestKotlin2Js]*.configure {
+    kotlinOptions.moduleKind = "umd"
 }
 
-[compileTestKotlin2Js]*.configure {
-    kotlinOptions.moduleKind = "commonjs"
-}
-
-task populateNodeModules(type: Copy, dependsOn: compileKotlin2Js) {
+task populateNodeModules(type: Copy, dependsOn: compileTestKotlin2Js) {
     from compileKotlin2Js.destinationDir
 
     configurations.testCompile.each {

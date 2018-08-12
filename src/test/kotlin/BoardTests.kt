@@ -5,6 +5,7 @@ class BoardTests {
 
     @Test
     fun foo() {
-        assertTrue { 1 + 1 == 2 }
+        val ai = MiniMaxAI()
+        assertTrue(ai.WINNING_LENGTH == 3)
     }
 }
