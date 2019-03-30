@@ -14,7 +14,7 @@ class Board(
         val clonedBoard = Board(sizeX, sizeY)
         for (y in 0 until sizeY) {
             for (x in 0 until sizeX) {
-                clonedBoard[x, y] = board[x, y]
+                clonedBoard[x, y] = this[x, y]
             }
         }
 
@@ -78,7 +78,7 @@ class Board(
             var i = k
             var j = 0
             while (i < sizeY && j < sizeX) {
-                if (i >= 0 && j >= 0) currentDiagonal.add(board[j, i])
+                if (i >= 0 && j >= 0) currentDiagonal.add(this[j, i])
                 i++
                 j++
             }
@@ -91,7 +91,7 @@ class Board(
             var i = k
             var j = sizeX - 1
             while (i < sizeY && j >= 0) {
-                if (i >= 0 && j >= 0) currentDiagonal.add(board[j, i])
+                if (i >= 0 && j >= 0) currentDiagonal.add(this[j, i])
                 i++
                 j--
             }
@@ -125,5 +125,17 @@ class Board(
 
     fun <T> List<T>.allItemsSame(): Boolean {
         return this.zipWithNext().all { (x, y) -> x == y }
+    }
+
+    override fun toString(): String {
+        return rows.joinToString("\n") { row ->
+            row.joinToString("|") {
+                when (it) {
+                    CellValue.FIRST -> "x"
+                    CellValue.SECOND -> "o"
+                    else -> " "
+                }
+            }
+        }
     }
 }

@@ -1,12 +1,11 @@
+import kotlinx.coroutines.experimental.delay
 import kotlin.math.max
 import kotlin.math.min
 
-class MiniMaxAI: FiveInLineAI() {
-
-    val WINNING_LENGTH = 3
+class MiniMaxAI(val WINNING_LENGTH: Int = 3): FiveInLineAI() {
 
     override suspend fun nextMove(board: Board): Pair<Int, Int> {
-        return 0 to 0
+        return computeNextMove(board, CellValue.SECOND)
     }
 
     fun Board.longestLineLength(value: CellValue): Int {
@@ -35,7 +34,19 @@ class MiniMaxAI: FiveInLineAI() {
         return longest
     }
 
-    fun minimax(board: Board, depth: Int, maximizingPlayer: Boolean): Int {
+    suspend fun computeNextMove(board: Board, value: CellValue): Pair<Int, Int> {
+        val moves = board.getAllEmptyPositions().map { (x, y) ->
+            val newBoard = board.clone()
+            newBoard[x, y] = value
+            minimax(newBoard, 9, true) to Pair(x, y)
+        }
+
+        //println(moves)
+
+        return moves.minBy { it.first }?.second ?: Pair(-1, -1)
+    }
+
+    suspend fun minimax(board: Board, depth: Int, maximizingPlayer: Boolean): Int {
         val value = if (maximizingPlayer) CellValue.FIRST else CellValue.SECOND
         val sign = if (maximizingPlayer) 1 else -1
 

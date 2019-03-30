@@ -1,19 +1,20 @@
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.experimental.Job
 import kotlinx.coroutines.experimental.awaitAnimationFrame
-import kotlinx.coroutines.experimental.delay
 import kotlinx.coroutines.experimental.launch
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.events.MouseEvent
 import kotlin.browser.document
 import kotlin.browser.window
+import kotlin.math.max
 
-val board = Board(10, 10)
-val boardView = BoardView(board)
-
-var nextMoveComputation: Job? = null
-val isGameOver = atomic(false)
+object Game {
+    val board = Board(3, 3)
+    val boardView = BoardView(board)
+    var nextMoveComputation: Job? = null
+    val isGameOver = atomic(false)
+}
 
 fun main(args: Array<String>) {
     if (jsTypeOf(window) == "undefined") return
@@ -35,14 +36,15 @@ fun main(args: Array<String>) {
         canvas.addEventListener("click", { e ->
             val mouseEvent = e as MouseEvent
 
-            val cellCoords = boardView.mousePositionToCoord(mouseEvent.offsetX, mouseEvent.offsetY)
+            val cellCoords = Game.boardView.mousePositionToCoord(mouseEvent.offsetX, mouseEvent.offsetY)
             cellCoords?.let { (x, y) ->
-                if (board.isEmptyAt(x, y)
-                    && nextMoveComputation?.isActive != true
-                    && isGameOver.value == false) {
-                    board[x, y] = CellValue.FIRST
+                if (Game.board.isEmptyAt(x, y) &&
+                    Game.nextMoveComputation?.isActive != true &&
+                    !Game.isGameOver.value
+                ) {
+                    Game.board[x, y] = CellValue.FIRST
                     checkForWinner()
-                    if (isGameOver.value == false) computeNextMoveAsync()
+                    if (!Game.isGameOver.value) computeNextMoveAsync()
                 }
             }
         })
@@ -50,22 +52,22 @@ fun main(args: Array<String>) {
 }
 
 fun computeNextMoveAsync() {
-    nextMoveComputation = launch {
-        val ai = AdvancedAI()
-        val (x, y) = ai.nextMove(board)
-        board[x, y] = CellValue.SECOND
+    Game.nextMoveComputation = launch {
+        val ai = MiniMaxAI(Game.board.let { max(it.sizeX, it.sizeY) })
+        val (x, y) = ai.nextMove(Game.board)
+        Game.board[x, y] = CellValue.SECOND
     }
 
-    nextMoveComputation?.invokeOnCompletion {
+    Game.nextMoveComputation?.invokeOnCompletion {
         checkForWinner()
     }
 }
 
 fun checkForWinner() {
-    val winnerValue = board.checkForWinner(5)
+    val winnerValue = Game.board.checkForWinner(Game.board.let { max(it.sizeX, it.sizeY) })
     if (winnerValue != CellValue.EMPTY) {
         println("WINNER IS: $winnerValue")
-        isGameOver.value = true
+        Game.isGameOver.value = true
     }
 }
 
@@ -79,5 +81,5 @@ fun clearCanvas(context: CanvasRenderingContext2D) {
 }
 
 fun draw(context: CanvasRenderingContext2D) {
-    boardView.drawBoard(context)
+    Game.boardView.drawBoard(context)
 }
