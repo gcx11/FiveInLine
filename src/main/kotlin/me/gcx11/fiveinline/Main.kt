@@ -1,7 +1,7 @@
-import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.experimental.Job
-import kotlinx.coroutines.experimental.awaitAnimationFrame
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitAnimationFrame
+import kotlinx.coroutines.launch
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.events.MouseEvent
@@ -13,7 +13,7 @@ object Game {
     val board = Board(3, 3)
     val boardView = BoardView(board)
     var nextMoveComputation: Job? = null
-    val isGameOver = atomic(false)
+    var isGameOver = false
 }
 
 fun main(args: Array<String>) {
@@ -25,7 +25,7 @@ fun main(args: Array<String>) {
         canvas.height = window.innerHeight
         document.body!!.appendChild(canvas)
 
-        launch {
+        GlobalScope.launch {
             while (true) {
                 window.awaitAnimationFrame()
                 clearCanvas(context)
@@ -40,11 +40,11 @@ fun main(args: Array<String>) {
             cellCoords?.let { (x, y) ->
                 if (Game.board.isEmptyAt(x, y) &&
                     Game.nextMoveComputation?.isActive != true &&
-                    !Game.isGameOver.value
+                    !Game.isGameOver
                 ) {
                     Game.board[x, y] = CellValue.FIRST
                     checkForWinner()
-                    if (!Game.isGameOver.value) computeNextMoveAsync()
+                    if (!Game.isGameOver) computeNextMoveAsync()
                 }
             }
         })
@@ -52,7 +52,7 @@ fun main(args: Array<String>) {
 }
 
 fun computeNextMoveAsync() {
-    Game.nextMoveComputation = launch {
+    Game.nextMoveComputation = GlobalScope.launch {
         val ai = MiniMaxAI(Game.board.let { max(it.sizeX, it.sizeY) })
         val (x, y) = ai.nextMove(Game.board)
         Game.board[x, y] = CellValue.SECOND
@@ -67,7 +67,7 @@ fun checkForWinner() {
     val winnerValue = Game.board.checkForWinner(Game.board.let { max(it.sizeX, it.sizeY) })
     if (winnerValue != CellValue.EMPTY) {
         println("WINNER IS: $winnerValue")
-        Game.isGameOver.value = true
+        Game.isGameOver = true
     }
 }
 

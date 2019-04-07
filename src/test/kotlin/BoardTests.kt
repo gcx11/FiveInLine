@@ -1,4 +1,6 @@
-import kotlinx.coroutines.experimental.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.promise
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -91,8 +93,9 @@ class BoardTests {
     }
 
     @Test
-    fun testWinningLength() {
+    fun testWinningLength(): Int? {
         assertEquals(3, miniMaxAI.WINNING_LENGTH)
+        return null
     }
 
     @Test
@@ -106,5 +109,5 @@ class BoardTests {
         assertTrue(x == 1 && y == 1)
     }
 
-    fun runWaiting(block: suspend () -> Unit) = promise { block() }
+    fun runWaiting(block: suspend () -> Unit) = GlobalScope.promise { block() }
 }

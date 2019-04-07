@@ -1,4 +1,4 @@
-import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.delay
 
 class SimpleAI: FiveInLineAI() {
     override suspend fun nextMove(board: Board): Pair<Int, Int> {
