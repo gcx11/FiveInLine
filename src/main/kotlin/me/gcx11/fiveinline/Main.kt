@@ -10,14 +10,13 @@ import kotlin.browser.window
 import kotlin.math.max
 
 object Game {
-    val board = Board(3, 3)
+    val board = Board(4, 4)
     val boardView = BoardView(board)
     var nextMoveComputation: Job? = null
     var isGameOver = false
 }
 
-fun main(args: Array<String>) {
-    if (jsTypeOf(window) == "undefined") return
+fun main() {
     window.onload = {
         val canvas = document.createElement("canvas") as HTMLCanvasElement
         val context = canvas.getContext("2d") as CanvasRenderingContext2D

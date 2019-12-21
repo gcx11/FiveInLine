@@ -58,14 +58,16 @@ class Board(
         }
     }
 
-    val rows: List<List<CellValue>> get() {
-        return items.map { it.toList() }
+    val rows: Sequence<Array<CellValue>> get() {
+        return items.asSequence()
     }
 
-    val columns: List<List<CellValue>> get() {
-        return (0 until sizeX).map { x ->
-            (0 until sizeY).map { y ->
-                items[y][x]
+    val columns: Sequence<Array<CellValue>> get() {
+        return sequence {
+            (0 until sizeX).map { x ->
+                yield(Array(sizeY) { y ->
+                    items[y][x]
+                })
             }
         }
     }
@@ -104,27 +106,34 @@ class Board(
 
     fun checkRows(winningLength: Int): CellValue {
         return rows
-            .flatMap { it.windowed(winningLength, 1) }
-            .filterNot { it.contains(CellValue.EMPTY) }
+            .flatMap { it.asSequence().windowed(winningLength, 1) }
+            .filterNot { CellValue.EMPTY in it }
             .firstOrNull { it.allItemsSame() }?.first() ?: CellValue.EMPTY
     }
 
     fun checkColumns(winningLength: Int): CellValue {
         return columns
-            .flatMap { it.windowed(winningLength, 1) }
-            .filterNot { it.contains(CellValue.EMPTY) }
+            .flatMap { it.asSequence().windowed(winningLength, 1) }
+            .filterNot { CellValue.EMPTY in it }
             .firstOrNull { it.allItemsSame() }?.first() ?: CellValue.EMPTY
     }
 
     fun checkDiagonals(winningLength: Int): CellValue {
         return diagonals
             .flatMap { it.windowed(winningLength, 1) }
-            .filterNot { it.contains(CellValue.EMPTY) }
+            .filterNot { CellValue.EMPTY in it }
             .firstOrNull { it.allItemsSame() }?.first() ?: CellValue.EMPTY
     }
 
-    fun <T> List<T>.allItemsSame(): Boolean {
-        return this.zipWithNext().all { (x, y) -> x == y }
+    fun <T: Any> Iterable<T>.allItemsSame(): Boolean {
+        //return this.zipWithNext().all { (x, y) -> x == y }
+        var lastValue: T? = null
+        for (value in this) {
+            if (lastValue != null && lastValue != value) return false
+            lastValue = value
+        }
+
+        return true
     }
 
     override fun toString(): String {

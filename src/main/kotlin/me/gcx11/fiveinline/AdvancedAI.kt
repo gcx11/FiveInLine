@@ -3,20 +3,22 @@ class AdvancedAI: FiveInLineAI() {
     override suspend fun nextMove(board: Board): Pair<Int, Int> {
         val emptyPositions = board.getAllEmptyPositions().shuffled()
         return emptyPositions.maxBy { (x, y) ->
-            val moves = listOf(Triple(x, y, CellValue.SECOND))
-            board.clone().applyMoves(moves).computeRank()
+            board[x, y] = CellValue.SECOND
+            val rank = board.computeRank()
+            board[x, y] = CellValue.EMPTY
+            rank
         }!!
     }
 
     fun Board.computeRank(): Int {
         return maxOf(
-            rows.map { value(it) }.max() ?: 0,
-            columns.map { value(it) }.max() ?: 0,
+            rows.map { value(it.asIterable()) }.max() ?: 0,
+            columns.map { value(it.asIterable()) }.max() ?: 0,
             diagonals.map { value(it) }.max() ?: 0
         )
     }
 
-    private fun value(values: List<CellValue>): Int {
+    private fun value(values: Iterable<CellValue>): Int {
         var best = 0
         var current = 0
         var wasStartEmpty = false
