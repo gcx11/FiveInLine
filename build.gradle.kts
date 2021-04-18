@@ -1,5 +1,5 @@
 plugins {
-    kotlin("js").version("1.3.61")
+    kotlin("js") version "1.4.32"
 }
 
 group = "me.gcx11"
@@ -13,21 +13,25 @@ kotlin.sourceSets {
     main {
         dependencies {
             implementation(kotlin("stdlib-js"))
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.3")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.4.3")
         }
     }
     test {
         dependencies {
             implementation(kotlin("test-js"))
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.3.3")
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.4.3")
         }
     }
 }
 
-kotlin.target.browser {
-    testTask {
-        useKarma {
-            useFirefox()
+kotlin {
+    js {
+        browser {
+            testTask {
+                useKarma {
+                    useFirefox()
+                }
+            }
         }
     }
 }

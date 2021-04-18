@@ -5,12 +5,12 @@ import kotlinx.coroutines.launch
 import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.events.MouseEvent
-import kotlin.browser.document
-import kotlin.browser.window
-import kotlin.math.max
+import kotlinx.browser.document
+import kotlinx.browser.window
 
 object Game {
-    val board = Board(4, 4)
+    val board = Board(5, 5)
+    val winningLength = 4
     val boardView = BoardView(board)
     var nextMoveComputation: Job? = null
     var isGameOver = false
@@ -52,8 +52,8 @@ fun main() {
 
 fun computeNextMoveAsync() {
     Game.nextMoveComputation = GlobalScope.launch {
-        val ai = MiniMaxAI(Game.board.let { max(it.sizeX, it.sizeY) })
-        val (x, y) = ai.nextMove(Game.board)
+        val ai = MiniMaxAI(Game.winningLength)
+        val (x, y) = ai.nextMove(Game.board.clone())
         Game.board[x, y] = CellValue.SECOND
     }
 
@@ -63,7 +63,7 @@ fun computeNextMoveAsync() {
 }
 
 fun checkForWinner() {
-    val winnerValue = Game.board.checkForWinner(Game.board.let { max(it.sizeX, it.sizeY) })
+    val winnerValue = Game.board.checkForWinner(Game.winningLength)
     if (winnerValue != CellValue.EMPTY) {
         println("WINNER IS: $winnerValue")
         Game.isGameOver = true

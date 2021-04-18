@@ -1,5 +1,6 @@
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.promise
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -80,6 +81,33 @@ class BoardTests {
     }
 
     @Test
+    fun testLongestLine() = runWaiting {
+        val b = Board(3, 3)
+
+        b[0, 0] = CellValue.FIRST
+        b[0, 1] = CellValue.SECOND
+        b[1, 1] = CellValue.FIRST
+        b[1, 0] = CellValue.SECOND
+        b[2, 0] = CellValue.FIRST
+
+        with(miniMaxAI) {
+            assertEquals(2, b.longestLineLength(CellValue.FIRST))
+        }
+    }
+
+    @Test
+    fun testMiniMax2() = runWaiting {
+        val b = Board(3, 3)
+
+        b[0, 0] = CellValue.FIRST
+        b[0, 1] = CellValue.SECOND
+        b[1, 1] = CellValue.FIRST
+        b[1, 0] = CellValue.SECOND
+
+        assertEquals(Pair(2, 2), miniMaxAI.computeNextMove(b, CellValue.FIRST))
+    }
+
+    @Test
     fun testFoo() {
         val b = Board(3, 3)
 
@@ -115,6 +143,7 @@ class BoardTests {
         return null
     }
 
+    @Ignore
     @Test
     fun testNextMove() = runWaiting {
         val board = Board(3, 3)

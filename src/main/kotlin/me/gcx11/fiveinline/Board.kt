@@ -137,11 +137,11 @@ class Board(
     }
 
     override fun toString(): String {
-        return rows.joinToString("\n") { row ->
+        return rows.joinToString("\r\n") { row ->
             row.joinToString("|") {
                 when (it) {
-                    CellValue.FIRST -> "x"
-                    CellValue.SECOND -> "o"
+                    CellValue.FIRST -> "o"
+                    CellValue.SECOND -> "x"
                     else -> " "
                 }
             }

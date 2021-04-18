@@ -1,5 +1,4 @@
-import kotlin.math.max
-import kotlin.math.min
+import kotlinx.coroutines.yield
 
 class MiniMaxAI(val WINNING_LENGTH: Int = 3): FiveInLineAI() {
 
@@ -9,9 +8,9 @@ class MiniMaxAI(val WINNING_LENGTH: Int = 3): FiveInLineAI() {
 
     fun Board.longestLineLength(value: CellValue): Int {
         return maxOf(
-                rows.map { longestLineSize(it.asIterable(), value) }.max() ?: 0,
-                columns.map { longestLineSize(it.asIterable(), value) }.max() ?: 0,
-                diagonals.map { longestLineSize(it, value) }.max() ?: 0
+                rows.map { longestLineSize(it.asIterable(), value) }.maxOrNull() ?: 0,
+                columns.map { longestLineSize(it.asIterable(), value) }.maxOrNull() ?: 0,
+                diagonals.map { longestLineSize(it, value) }.maxOrNull() ?: 0
         )
     }
 
@@ -34,42 +33,76 @@ class MiniMaxAI(val WINNING_LENGTH: Int = 3): FiveInLineAI() {
     }
 
     suspend fun computeNextMove(board: Board, value: CellValue): Pair<Int, Int> {
-        val otherValue = if (value == CellValue.FIRST) CellValue.SECOND else CellValue.FIRST
-        val moves = board.getAllEmptyPositions().map { (x, y) ->
-            board[x, y] = value
-            val move = minimax(board, 4, otherValue, false) to Pair(x, y)
-            board[x, y] = CellValue.EMPTY
-            move
-        }
-
-        //println(moves)
-        return moves.maxBy { it.first }?.second ?: Pair(-1, -1)
+        return minimax(board, 4, value, true).second ?: Pair(-1, -1)
     }
 
-    suspend fun minimax(board: Board, depth: Int, value: CellValue, maximizingPlayer: Boolean): Int {
+    suspend fun minimax(board: Board, depth: Int, value: CellValue, maximizingPlayer: Boolean): Pair<Int, Pair<Int, Int>?> {
         val otherValue = if (value == CellValue.FIRST) CellValue.SECOND else CellValue.FIRST
-        val currentValue = board.longestLineLength(value)
 
-        if (depth == 0 || currentValue == WINNING_LENGTH) {
-            return currentValue
-        } else if (board.getAllEmptyPositions().isEmpty()) {
-            return 0
-        } else if (maximizingPlayer) {
-            var points = Int.MIN_VALUE
-            board.getAllEmptyPositions().forEach { (x, y) ->
-                board[x, y] = value
-                points = max(points, minimax(board, depth - 1, otherValue, false))
-                board[x, y] = CellValue.EMPTY
+        if (maximizingPlayer) {
+            if (
+                depth == 0 ||
+                board.getAllEmptyPositions().isEmpty() ||
+                board.longestLineLength(value) == WINNING_LENGTH ||
+                board.longestLineLength(otherValue) == WINNING_LENGTH
+            ) {
+                return Pair(boardStateValue(board, value), null)
+            } else {
+                var bestPosition: Pair<Int, Int>? = null
+                var maxScore = Int.MIN_VALUE
+
+                // we don't want to block the render loop forever
+                yield()
+
+                for ((x, y) in board.getAllEmptyPositions()) {
+                    board[x, y] = value
+
+                    val (score, _) = minimax(board, depth - 1, otherValue, false)
+                    if (score > maxScore) {
+                        maxScore = score
+                        bestPosition = Pair(x, y)
+                    }
+
+                    board[x, y] = CellValue.EMPTY
+                }
+
+                return Pair(maxScore, bestPosition)
             }
-            return points
         } else {
-            var points = Int.MAX_VALUE
-            board.getAllEmptyPositions().forEach { (x, y) ->
-                board[x, y] = value
-                points = min(points, minimax(board, depth - 1, otherValue, true))
-                board[x, y] = CellValue.EMPTY
+            if (
+                depth == 0 ||
+                board.getAllEmptyPositions().isEmpty() ||
+                board.longestLineLength(value) == WINNING_LENGTH ||
+                board.longestLineLength(otherValue) == WINNING_LENGTH
+            ) {
+                return Pair(boardStateValue(board, otherValue), null)
+            } else {
+                var bestPosition: Pair<Int, Int>? = null
+                var minScore = Int.MAX_VALUE
+
+                // we don't want to block the render loop forever
+                yield()
+
+                for ((x, y) in board.getAllEmptyPositions()) {
+                    board[x, y] = value
+
+                    val (score, _) = minimax(board, depth - 1, otherValue, true)
+                    if (score < minScore) {
+                        minScore = score
+                        bestPosition = Pair(x, y)
+                    }
+
+                    board[x, y] = CellValue.EMPTY
+                }
+
+                return Pair(minScore, bestPosition)
             }
-            return points
         }
+    }
+
+    private fun boardStateValue(board: Board, value: CellValue): Int {
+        val otherValue = if (value == CellValue.FIRST) CellValue.SECOND else CellValue.FIRST
+
+        return if (board.longestLineLength(otherValue) == WINNING_LENGTH) -WINNING_LENGTH else board.longestLineLength(value)
     }
 }
