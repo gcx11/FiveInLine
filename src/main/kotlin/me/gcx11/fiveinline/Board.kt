@@ -10,6 +10,14 @@ class Board(
         items = Array(sizeY) { Array(sizeX) { CellValue.EMPTY } }
     }
 
+    fun clear() {
+        for (y in 0 until sizeY) {
+            for (x in 0 until sizeX) {
+                this[x, y] = CellValue.EMPTY
+            }
+        }
+    }
+
     fun clone(): Board {
         val clonedBoard = Board(sizeX, sizeY)
         for (y in 0 until sizeY) {
@@ -44,6 +52,37 @@ class Board(
         }
 
         return result
+    }
+
+    fun getAllEmptyPositionsSortedByNeighbours(): List<Pair<Int, Int>> {
+        val result = mutableListOf<Pair<Pair<Int, Int>, Int>>()
+        for (y in 0 until sizeY) {
+            for (x in 0 until sizeX) {
+                if (isEmptyAt(x, y)) {
+                    result.add(Pair(Pair(x, y), neighbourcount(x, y)))
+                }
+            }
+        }
+
+        result.shuffle()
+        result.sortByDescending { it.second }
+        return result.filter{ it.second > 0 }.map { it.first }
+    }
+
+    private fun neighbourcount(x: Int, y: Int): Int {
+        var count = 0
+
+        for (i in -1..1) {
+            for (j in -1..1) {
+                if (i == 0 && j == 0) continue
+
+                if ((x+i in 0 until sizeX) && (y+j in 0 until sizeY)) {
+                    if (!isEmptyAt(x+i, y+j)) count++
+                }
+            }
+        }
+
+        return count
     }
 
     fun checkForWinner(winningLength: Int): CellValue {
@@ -125,7 +164,7 @@ class Board(
             .firstOrNull { it.allItemsSame() }?.first() ?: CellValue.EMPTY
     }
 
-    fun <T: Any> Iterable<T>.allItemsSame(): Boolean {
+    private fun <T: Any> Iterable<T>.allItemsSame(): Boolean {
         //return this.zipWithNext().all { (x, y) -> x == y }
         var lastValue: T? = null
         for (value in this) {

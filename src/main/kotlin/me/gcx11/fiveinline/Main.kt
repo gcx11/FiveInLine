@@ -2,11 +2,10 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitAnimationFrame
 import kotlinx.coroutines.launch
-import org.w3c.dom.CanvasRenderingContext2D
-import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.events.MouseEvent
 import kotlinx.browser.document
 import kotlinx.browser.window
+import org.w3c.dom.*
 
 object Game {
     val board = Board(5, 5)
@@ -18,11 +17,15 @@ object Game {
 
 fun main() {
     window.onload = {
-        val canvas = document.createElement("canvas") as HTMLCanvasElement
+        val canvas = document.getElementsByTagName("canvas")[0] as HTMLCanvasElement
         val context = canvas.getContext("2d") as CanvasRenderingContext2D
-        canvas.width  = window.innerWidth
-        canvas.height = window.innerHeight
-        document.body!!.appendChild(canvas)
+        canvas.width = 600
+        canvas.height = 400
+
+        val button = document.getElementById("reset") as HTMLButtonElement
+        button.onclick = {
+            resetGame()
+        }
 
         GlobalScope.launch {
             while (true) {
@@ -65,7 +68,11 @@ fun computeNextMoveAsync() {
 fun checkForWinner() {
     val winnerValue = Game.board.checkForWinner(Game.winningLength)
     if (winnerValue != CellValue.EMPTY) {
-        println("WINNER IS: $winnerValue")
+        val label = document.getElementById("winnerInfo") as HTMLLabelElement
+        label.hidden = false
+        label.textContent = "Winner is: $winnerValue"
+        val button = document.getElementById("reset") as HTMLButtonElement
+        button.hidden = false
         Game.isGameOver = true
     }
 }
@@ -81,4 +88,13 @@ fun clearCanvas(context: CanvasRenderingContext2D) {
 
 fun draw(context: CanvasRenderingContext2D) {
     Game.boardView.drawBoard(context)
+}
+
+fun resetGame() {
+    Game.board.clear()
+    Game.isGameOver = false
+    val label = document.getElementById("winnerInfo") as HTMLLabelElement
+    label.hidden = true
+    val button = document.getElementById("reset") as HTMLButtonElement
+    button.hidden = true
 }
